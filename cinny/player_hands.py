@@ -20,14 +20,16 @@ for player in people:
     median_hands_per_game = summary['total_hands']['50%']
     min_hands_per_game = summary['total_hands']['min']
     max_hands_per_game = summary['total_hands']['max']
+    total_wins = DF_player_game.sum()['total_hands_won']
+    games_played = int(summary['game']['count'])
     # create df
     entry = []
     entry.append([player,
                   average_hands_per_game, median_hands_per_game,
-                  min_hands_per_game, max_hands_per_game])
+                  min_hands_per_game, max_hands_per_game,
+                  total_wins, games_played])
     data_hand.extend(entry)
-
 # exoprt data
 df_hand = pd.DataFrame(data_hand, columns=[
-                       'player', 'average', 'median', 'min', 'max'])
+                       'player', 'average', 'median', 'min', 'max', 'total_wins', 'games_played'])
 df_hand.to_csv('cinny/player_hands.csv')
