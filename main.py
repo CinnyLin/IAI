@@ -358,3 +358,5 @@ print(pd.DataFrame.from_dict(looseness_comp, orient='index'))
 # import pickle
 # with open("python_hand_data.pickle", 'wb') as f:
 #     pickle.dump({'players': players, 'games': games, 'df': df}, f)
+
+df.to_csv('cinny/df.csv')
