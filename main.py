@@ -110,6 +110,8 @@ _, _, _, _ = meta_game_stats(games)
 print("\nCombining games with 'b' appended to filename\n")
 games_b = [x for x in games.keys() if x.find('b') > -1]
 for g1, g2 in zip([x.split('b')[0] for x in games_b], games_b):
+    print('For pair %s and %s, %s missing %s and %s missing %s' % (g1, g2, g1,
+                                                                   games[g2].players - games[g1].players, g2, games[g1].players - games[g2].players))
     games[g1].combine_games(games[g2], print_f=False)
     games.pop(g2)
 del g1, g2, games_b
@@ -120,6 +122,11 @@ _, _, _, _ = meta_game_stats(games)
 print("\nDropping band hands from games\n")
 _ = [g.drop_bad_hands() for g in games.values()]
 
+_, _, _, _ = meta_game_stats(games)
+
+# ----- map player names which appear to be mis-labeled across files that were combined above
+for _, g in games.items():
+    g.map_players()
 _, _, _, _ = meta_game_stats(games)
 
 # ----- parse by player -----
