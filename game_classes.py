@@ -1,6 +1,5 @@
 import json
 from odds_functions import slansky_strength, chen_strength, exp_val_implied_prob, est_prob_slansky
-# from params import slansky_prob_dict
 from scipy.stats import rankdata
 
 
@@ -18,6 +17,7 @@ class Hand:
         self.missing_fields = list()
         self.start_stack = None  # calculated in Game object because it is based on change log of previous hands
         self.start_stack_rank = None  # calculated in Game object because it is based on start_stack, which is change log of previous hands
+        self.relative_start_stack = None
 
         # check for initialization of select attributes
         self.check_player_completeness()
@@ -47,11 +47,12 @@ class Hand:
     def get_cards(self):
         try:
             t_all_cards = self.hand_data.split(':')[3].split('|')
-            if len(t_all_cards) > len(self.players):
+            if len(t_all_cards[-1]) > 4:
                 t_board_cards = t_all_cards[-1].split('/')
-                t_hole_cards = t_all_cards[:-1] + [
-                    t_board_cards.pop(0)]  # last set of hole cards splits to board because of "/" "|" convention
-                return {'hole_cards': dict(zip(self.players, t_hole_cards)), 'board_cards': t_board_cards}
+                t_hole_cards = t_all_cards[:-1] + [t_board_cards.pop(0)]  # last set of hole cards splits to board because of "/" "|" convention
+                t_cards = {'hole_cards': dict(zip(self.players, t_hole_cards))}
+                t_cards.update(dict(zip(['flop', 'turn', 'river'][0:len(t_board_cards)], t_board_cards)))  # ,   'board_cards': t_board_cards}
+                return t_cards
             else:
                 t_hole_cards = t_all_cards
                 return {'hole_cards': dict(zip(self.players, t_hole_cards))}
@@ -137,8 +138,7 @@ class Hand:
             self.players = [new if x == old else x for x in self.players]
             self.small_blind = new if self.small_blind == old else self.small_blind
             self.big_blind = new if self.big_blind == old else self.big_blind
-            for r in self.cards.keys():
-                self.cards[r] = dict(zip([new if x == old else x for x in list(self.cards[r].keys())], list(self.cards[r].values())))
+            self.cards['hole_cards'] = dict(zip([new if x == old else x for x in list(self.cards['hole_cards'].keys())], list(self.cards['hole_cards'].values())))
             self.odds = dict(zip([new if x == old else x for x in list(self.odds.keys())], list(self.odds.values())))
             for a in self.actions.keys():
                 self.actions[a] = dict(zip([new if x == old else x for x in list(self.actions[a].keys())], list(self.actions[a].values())))
@@ -239,6 +239,10 @@ class Game:
 
                 # get rankings of stacks based on relative stack sizes
                 self.hands[str(t_h_num)].start_stack_rank = dict(zip(self.hands[str(t_h_num)].start_stack.keys(), rankdata([-i for i in self.hands[str(t_h_num)].start_stack.values()], method='max')))
+
+                # get relative start stack size in terms of first person's stack
+
+                self.hands[str(t_h_num)].relative_start_stack = dict([(p, self.hands[str(t_h_num)].start_stack[p] / self.hands[str(t_h_num)].start_stack[min(self.hands[str(t_h_num)].start_stack_rank, key=self.hands[str(t_h_num)].start_stack_rank.get)]) for p in self.hands[str(t_h_num)].start_stack_rank.keys()])
 
             # add total game outcome to game object
             self.final_outcome = self.hands[str(self.end_hand)].start_stack.copy()
